@@ -84,6 +84,18 @@ class Shipment(db.Model):
     updated_at = db.Column(db.DateTime, onupdate=db.func.now())
 
 
+class ShippingRate(db.Model):
+    """
+    Hardcoded rates for calculation, used instead of a complex Distance model.
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    rate_type = db.Column(db.String(50), unique=True, nullable=False) # e.g., 'bike', 'bus'
+    base_price = db.Column(db.Float, nullable=False) # Fixed starting price
+    price_per_kg = db.Column(db.Float, nullable=False) # Price multiplier for weight
+    # Placeholder for distance multiplier, used for inter-city charges
+    distance_multiplier = db.Column(db.Float, nullable=False)
+
+
 
 class Payment(db.Model):
 
@@ -117,6 +129,9 @@ class ShipmentStatusHistory(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.now())
 
     shipment = db.relationship('Shipment', backref='status_history')
+
+
+
 
 
 class State(db.Model):

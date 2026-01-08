@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JoyXpress · Confirm Your Order</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --joy-color: #1abc9c;
+            --xpress-color: #1f2937;
+            --accent: #f59e0b;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --muted: #6b7280;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--xpress-color);
+        }
+
+        /* Brand */
+        .brand {
+            font-weight: 700;
+            font-size: 1.8rem;
+            letter-spacing: -0.5px;
+        }
+        .brand .joy { color: var(--joy-color); }
+        .brand .xpress { color: var(--xpress-color); }
+
+        /* Card */
+        .confirm-card {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .confirm-header {
+            padding: 2.5rem;
+            background: linear-gradient(135deg, var(--xpress-color), #111827);
+            color: white;
+            text-align: center;
+        }
+
+        .confirm-header i {
+            font-size: 3rem;
+            color: var(--joy-color);
+        }
+
+        .tracking-box {
+            background: #f1fdf9;
+            border: 1px solid #d1fae5;
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .tracking-number {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--xpress-color);
+            letter-spacing: 1px;
+        }
+
+        .badge-status {
+            background: var(--accent);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+        }
+
+        .price-box {
+            background: #ecfeff;
+            border: 2px solid var(--joy-color);
+            border-radius: 14px;
+            padding: 1.8rem;
+            text-align: center;
+        }
+
+        .price-box .amount {
+            font-size: 2.6rem;
+            font-weight: 700;
+            color: var(--xpress-color);
+        }
+
+        .pay-btn {
+            background: linear-gradient(135deg, var(--joy-color), #10b981);
+            border: none;
+            border-radius: 999px;
+            padding: 1rem 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(16,185,129,0.4);
+        }
+
+        .pay-btn:hover {
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container py-5">
+    <!-- <div class="text-center mb-4">
+        <div class="brand">
+            <span class="joy">Joy</span><span class="xpress">Xpress</span>
+        </div>
+    </div> -->
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card confirm-card">
+
+                <div class="confirm-header">
+                    <i class="fa-solid fa-circle-check mb-3"></i>
+                    <h2 class="mb-1">Order Confirmed</h2>
+                    <p class="mb-0 opacity-75">Review your shipment before payment</p>
+                </div>
+
+                <div class="card-body p-5">
+
+                    <div class="tracking-box">
+                        <div class="text-muted small mb-1">TRACKING REFERENCE</div>
+                        <div class="tracking-number">{{ shipment.tracking_number }}</div>
+                        <div class="mt-2">
+                            <span class="badge-status">{{ shipment.status }}</span>
+                        </div>
+                    </div>
+
+                    <div class="section-title">Shipment Details</div>
+                    <div class="detail-row">
+                        <span>Package Weight</span>
+                        <strong>{{ shipment.package_weight }} kg</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Service Type</span>
+                        <strong class="text-capitalize">{{ shipment.delivery_type }}</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Distance</span>
+                        <strong>{{ shipment.distance_km | int }} km</strong>
+                    </div>
+                    <div class="detail-row">
+                        <span>Date Created</span>
+                        <strong>{{ shipment.created_at.strftime('%d %b %Y') }}</strong>
+                    </div>
+
+                    <div class="section-title mt-4">Route</div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <strong class="text-muted">Pickup</strong>
+                            <p class="mb-0">{{ shipment.pickup_address }}</p>
+                            <small class="text-muted">{{ shipment.pickup_city }}, {{ shipment.pickup_state }}</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <strong class="text-muted">Delivery</strong>
+                            <p class="mb-0">{{ shipment.delivery_address }}</p>
+                            <small class="text-muted">{{ shipment.delivery_city }}, {{ shipment.delivery_state }}</small>
+                        </div>
+                    </div>
+
+                    <div class="price-box mt-4">
+                        <div class="text-muted small">TOTAL PAYABLE</div>
+                        <div class="amount">₦{{ "{:,.2f}".format(shipment.calculated_amount) }}</div>
+                    </div>
+
+                    <div class="text-center mt-5">
+                        <a href="{{ url_for('bppayment.initiate_payment', shipment_id=shipment.id) }}"
+                           class="btn pay-btn text-white">
+                            <i class="fa-solid fa-lock mr-2"></i> Pay Securely
+                        </a>
+
+                        <div class="mt-3">
+                            <a href="{{ url_for('bpuser.dashboard') }}" class="text-muted small">
+                                Back to dashboard
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

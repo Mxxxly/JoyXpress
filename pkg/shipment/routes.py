@@ -1,57 +1,109 @@
-# pkg/shipment/routes.py
+# pkg/shipment/routes.py (Ensure these functions are correct)
 
 from flask import render_template, redirect, url_for, flash, session, jsonify, request
 from . import shipmentobj 
 from .form import NewShipmentForm
-from pkg.models import State, City, User, db # Ensure User and db are imported
-# Removed: from pkg.auth.decorators import login_required 
+# Ensure all models are imported:
+from pkg.models import State, City, User, db, Shipment, ShippingRate 
+from .services import calculate_rate, generate_tracking_number 
 
-# NOTE: The 'u' (current user object) is best retrieved within the function
-# for security and context, especially without a decorator.
 
 @shipmentobj.route('/new/', methods=['GET', 'POST'])
 def new_shipment():
-    """Handles the creation of a new shipment order."""
+    """Handles the creation and saving of a new shipment order."""
     
-    # 1. Security Check: Ensure user is logged in (Manual check)
     user_id = session.get('useronline')
-    if not user_id:
+    u = User.query.get(user_id) if user_id else None
+
+    if not u:
         flash('You must be logged in to create a new shipment.', 'warning')
         return redirect(url_for('bpuser.login'))
-        
-    # Retrieve the current user object
-    u = User.query.get(user_id) 
 
     form = NewShipmentForm()
     
     if form.validate_on_submit():
-        # *** SHIPMENT LOGIC STARTS HERE ***
         
-        distance = form.distance_km.data
-        amount = form.calculated_amount.data
+        # --- SERVER-SIDE RATE CALCULATION (Happens ONLY on final form submission) ---
         
-        if not distance or not amount:
-            # Note: This is a client-side error, but we validate it server-side too.
-            flash('Please click the "Calculate Rate" button and ensure a valid rate is displayed before confirming.', 'danger')
+        # We use form.data directly since form.validate_on_submit() passed
+        try:
+            rates = calculate_rate(
+                pickup_city_id=form.pickup_city.data,
+                delivery_city_id=form.delivery_city.data,
+                weight_kg=form.package_weight.data,
+                delivery_type=form.delivery_type.data
+            )
+            distance = rates['distance_km']
+            amount = rates['calculated_amount']
+            
+        except ValueError as e:
+            # Catches errors from calculate_rate (e.g., missing city, missing rate tier)
+            flash(f'Error calculating rate: {e}', 'danger')
             return render_template('shipment/new_shipment.html', form=form, u=u, title='Create New Shipment')
         
-        # ... (Shipment creation logic) ...
-        
-        flash(f'Shipment order received. Redirecting to payment...', 'success')
-        # Redirecting to the dashboard for now
-        return redirect(url_for('bpuser.dashboard')) 
+        # Optional: Additional check for weight/type if form validation is weak
+        if distance is None or amount is None:
+             flash('A calculation error prevented order creation. Check inputs.', 'danger')
+             return render_template('shipment/new_shipment.html', form=form, u=u, title='Create New Shipment')
 
+
+        # --- SHIPMENT DATABASE CREATION ---
+        tracking_id = generate_tracking_number()
+        
+        # Retrieve City/State Names (Uses form IDs, which should be safe)
+        # Add safety checks here to prevent crash if City.query.get() returns None
+        pickup_city_obj = City.query.get(form.pickup_city.data)
+        delivery_city_obj = City.query.get(form.delivery_city.data)
+        pickup_state_obj = State.query.get(form.pickup_state.data)
+        delivery_state_obj = State.query.get(form.delivery_state.data)
+        
+        if not all([pickup_city_obj, delivery_city_obj, pickup_state_obj, delivery_state_obj]):
+             flash('One or more location fields contained an invalid value. Please re-select.', 'danger')
+             return render_template('shipment/new_shipment.html', form=form, u=u, title='Create New Shipment')
+
+        new_shipment = Shipment(
+            tracking_number=tracking_id,
+            user_id=u.id,
+            receiver_name=form.receiver_name.data,
+            receiver_phone=form.receiver_phone.data,
+            pickup_address=form.pickup_address.data,
+            pickup_city=pickup_city_obj.name,
+            pickup_state=pickup_state_obj.name,
+            delivery_address=form.delivery_address.data,
+            delivery_city=delivery_city_obj.name,
+            delivery_state=delivery_state_obj.name,
+            package_weight=form.package_weight.data,
+            delivery_type=form.delivery_type.data,
+            distance_km=distance, # Store the calculated distance factor
+            calculated_amount=amount,
+            status='pending'
+        )
+        
+        try:
+            db.session.add(new_shipment)
+            db.session.commit()
+            
+            flash(f'Shipment **{tracking_id}** created successfully. Proceed to payment.', 'success')
+            return redirect(url_for('bpshipment.confirmation', shipment_id=new_shipment.id))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash(f'An error occurred while saving the shipment: {str(e)}', 'danger')
+            return redirect(url_for('bpshipment.new_shipment')) 
+
+    # GET request or form validation failed
     return render_template(
         'shipment/new_shipment.html', 
         form=form, 
-        u=u, # Pass the user object
+        u=u,
         title='Create New Shipment'
     )
+
 
 @shipmentobj.route('/api/cities/<int:state_id>')
 def get_cities(state_id):
     """
-    API endpoint to fetch cities belonging to a specific state.
+    API endpoint to fetch cities belonging to a specific state. (STILL NEEDED FOR DROPDOWNS)
     """
     if state_id == 0:
         return jsonify([])
@@ -59,3 +111,38 @@ def get_cities(state_id):
     cities = City.query.filter_by(state_id=state_id).order_by(City.name).all()
     city_list = [{'id': city.id, 'name': city.name} for city in cities]
     return jsonify(city_list)
+
+
+# *** REMOVE THE ENTIRE api_calculate_rate ROUTE ***
+
+
+# pkg/shipment/routes.py (Ensure this route exists)
+
+@shipmentobj.route('/confirmation/<int:shipment_id>')
+# @login_required # Confirmation should also be restricted to logged-in users
+def confirmation(shipment_id):
+    """
+    Displays the shipment details and prepares for payment.
+    """
+    # 1. Retrieve the shipment
+    shipment = Shipment.query.get_or_404(shipment_id)
+    
+    # 2. Security Check: Ensure the user owns the shipment
+    user_id = session.get('useronline')
+    u = User.query.get(user_id) if user_id else None
+    
+    if not u or shipment.user_id != u.id:
+        flash('Access Denied or Shipment Not Found.', 'danger')
+        return redirect(url_for('bpuser.dashboard'))
+        
+    # 3. Check if payment has already been made
+    if shipment.status != 'pending':
+        flash('This shipment is already processed or paid.', 'warning')
+        return redirect(url_for('bpuser.dashboard'))
+        
+    return render_template(
+        'shipment/confirmation.html',
+        shipment=shipment,
+        u=u,
+        title="Confirm Order"
+    )

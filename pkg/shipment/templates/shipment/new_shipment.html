@@ -177,39 +177,67 @@
             });
             
             // --- Rate Calculation Placeholder Logic ---
-            $('#calculateBtn').click(function() {
+        // --- Rate Calculation Logic (Must match server) ---
+        $('#calculateBtn').click(function() {
                 const weight = parseFloat($('#package_weight').val());
                 const pickupCityId = $('#pickup_city').val();
                 const deliveryCityId = $('#delivery_city').val();
+                const deliveryType = $('#delivery_type').val();
+                
+                // Get State IDs (Needed to check inter/intra state)
+                const pickupStateId = $('#pickup_state').val();
+                const deliveryStateId = $('#delivery_state').val();
 
-                if (weight > 0 && pickupCityId && deliveryCityId) {
+                if (weight > 0 && pickupCityId && deliveryCityId && deliveryType) {
                     
-                    // The following is dummy calculation logic. 
-                    // In production, this should be an AJAX call to a Python service route.
+                    // 1. DEFINE RATES (MUST MATCH DATABASE SHIPPINGRATE TABLE EXACTLY)
+                    const rates = {
+                        // REPLACE THESE VALUES WITH YOUR REAL DATABASE VALUES
+                        'bike': {base: 1500.00, perKg: 50.00, distMult: 1.00},
+                        'van': {base: 3500.00, perKg: 150.00, distMult: 2.50},
+                        'bus': {base: 6000.00, perKg: 250.00, distMult: 4.00},
+                        // Add any other rate tiers you support (e.g., 'truck')
+                    };
+
+                    const rateTier = rates[deliveryType];
                     
-                    const baseRate = 1500;
-                    const weightRate = 300;
-                    const distanceRate = 5;
+                    if (!rateTier) {
+                         alert(`Rate tier '${deliveryType}' is not defined in the frontend rates.`);
+                         return;
+                    }
                     
-                    // Simple logic to simulate distance/cost difference
-                    const cityFactor = Math.abs(pickupCityId - deliveryCityId) + 1;
-                    const dummyDistance = cityFactor * 50 + Math.floor(Math.random() * 100); 
-                    const dummyAmount = baseRate + (weight * weightRate) + (dummyDistance * distanceRate);
+                    // 2. CALCULATE DISTANCE (MUST MATCH SERVER LOGIC)
+                    let distanceKm;
                     
+                    if (pickupStateId === deliveryStateId) {
+                        distanceKm = 50.0; // Intra-state assumption (50km)
+                    } else {
+                        distanceKm = 450.0; // Inter-state assumption (450km)
+                    }
+                    
+                    // 3. FINAL CALCULATION
+                    
+                    const baseCharge = rateTier.base;
+                    const distanceCharge = distanceKm * rateTier.distMult;
+                    const weightCharge = weight * rateTier.perKg;
+
+                    let finalAmount = baseCharge + distanceCharge + weightCharge;
+                    finalAmount = finalAmount.toFixed(2); // Match Python's round(..., 2)
+
                     // Update the form's hidden fields
-                    $('#distance_km').val(dummyDistance.toFixed(2));
-                    $('#calculated_amount').val(dummyAmount.toFixed(2));
+                    $('#distance_km').val(distanceKm.toFixed(2));
+                    $('#calculated_amount').val(finalAmount);
 
                     // Update the display area
-                    $('#finalRate').text('₦' + dummyAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
-                    $('#finalDistance').text(dummyDistance.toFixed(0));
+                    $('#finalRate').text('₦' + parseFloat(finalAmount).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}));
+                    $('#finalDistance').text(distanceKm.toFixed(0));
                     $('#rateDisplay').slideDown();
 
                 } else {
-                    alert('Please enter a valid weight and select both pickup and delivery cities to calculate the rate.');
+                    alert('Please ensure weight, cities, and delivery type are selected to calculate the rate.');
                 }
             });
-            // --- End Rate Calculation Placeholder Logic ---
+            // --- End Rate Calculation Logic ---
         });
     </script>
     

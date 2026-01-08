@@ -1,6 +1,6 @@
-from flask import render_template
+from flask import render_template,flash,redirect,url_for,request
 from pkg.admin import adminobj
-from pkg.models import db, State, City
+from pkg.models import db, State, City, ShippingRate
 
 
 NIGERIA_LOCATIONS = {
@@ -80,4 +80,51 @@ def create_states_cities():
     return "Nigerian states and cities created successfully!"
 
 
+@adminobj.route('/admin/setup_rates', methods=['GET', 'POST'])
+def setup_rates():
+    """Route to initialize or update all required shipping rates."""
+    
+    # 1. Define all vehicle types and their initial/default values
+    # You can adjust these prices as needed.
+    rate_defaults = {
+        'bike': {'base_price': 1500.00, 'price_per_kg': 50.00, 'distance_multiplier': 1.00},
+        'van': {'base_price': 3500.00, 'price_per_kg': 150.00, 'distance_multiplier': 2.50},
+        'bus': {'base_price': 6000.00, 'price_per_kg': 250.00, 'distance_multiplier': 4.00},
+    }
+    
+    updated_count = 0
+    
+    try:
+        for rate_type, defaults in rate_defaults.items():
+            # Check if rate already exists
+            rate = ShippingRate.query.filter_by(rate_type=rate_type).first()
+            
+            if rate is None:
+                # Insert new rate
+                rate = ShippingRate(
+                    rate_type=rate_type,
+                    base_price=defaults['base_price'],
+                    price_per_kg=defaults['price_per_kg'],
+                    distance_multiplier=defaults['distance_multiplier']
+                )
+                db.session.add(rate)
+                updated_count += 1
+            else:
+                # If you ever use a POST method here, you would update existing rates:
+                # rate.base_price = defaults['base_price'] 
+                # ...
+                pass # Skipping updates for simplicity on a GET request
+                
+        db.session.commit()
+        
+        if updated_count > 0:
+            flash(f"SUCCESS: Initial rates for {updated_count} vehicle types inserted. You can now calculate rates.", 'success')
+        else:
+            flash("Rates already configured. No changes made.", 'info')
 
+    except Exception as e:
+        db.session.rollback()
+        flash(f"FATAL ERROR setting up rates: {str(e)}", 'danger')
+
+    # Redirect to a safe page after setup
+    return redirect(url_for('bpshipment.new_shipment'))

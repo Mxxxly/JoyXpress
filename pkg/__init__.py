@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 from flask_migrate import Migrate
+from dotenv import load_dotenv 
+import os 
 
 csrf = CSRFProtect()
+load_dotenv()
 
 def create_app():
     from pkg import config
@@ -32,6 +35,10 @@ def create_app():
     app.register_blueprint(shipmentobj)
     app.register_blueprint(trackingobj)
 
+    app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY") # Reads from .env
+    app.config['PAYSTACK_SECRET_KEY'] = os.environ.get("PAYSTACK_SECRET_KEY") # Reads from .env
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("SQLALCHEMY_DATABASE_URI")
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False) # Reads from .env or defaults to False
     
     app.config.from_pyfile('config.py',silent=True)
     app.config.from_object(config.TestConfig)
