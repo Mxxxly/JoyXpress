@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon">
+
+    <!-- Google Web Fonts (external stays the same) -->
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome (external stays the same) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.10.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Libraries Stylesheet -->
+    <link href="{{ url_for('static', filename='lib/owlcarousel/assets/owl.carousel.min.css') }}" rel="stylesheet">
+    
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+</head>
+<body>
+    <!-- {{ url_for('bpadmin.admin_login') }} -->
+    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} text-center">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+            <div class="col-md-10 offset-md-1">
+                <div class="d-flex justify-content-between">
+                    <h2 class="text-center"> JoyXpress Admin Login</h2>
+                    <a href="{{url_for(('home_page'))}}">Home Page</a>
+                </div>
+                <form action="" method="post">
+                    {{adminloginform.csrf_token}}
+                    <div class="mb-3">
+                        {{adminloginform.username.label}}
+                        {{adminloginform.username(class_='form-control border-dark')}}
+                    </div>
+                    <div class="mb-3">
+                        {{adminloginform.password.label}}
+                        {{adminloginform.password(class_='form-control border-dark')}}
+                    </div>
+                    <div>
+                        {{adminloginform.submit(class_='btn btn-warning col-12')}}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

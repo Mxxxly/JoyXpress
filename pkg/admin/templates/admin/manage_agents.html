@@ -1,0 +1,168 @@
+{% extends "admin/dashboard.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('bpadmin.dashboard') }}" class="btn btn-light me-3">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h3 class="mb-0">Agent Management</h3>
+    </div>
+
+    <!-- Flash messages -->
+    <div class="row justify-content-center mb-3">
+        <div class="col-lg-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% for category, msg in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show text-center">
+                        {{ msg }}
+                        <button type="button" class="close" data-dismiss="alert">×</button>
+                    </div>
+                {% endfor %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add Agent -->
+        <div class="col-lg-5 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">Add New Agent</h5>
+
+                    <form method="POST" action="{{ url_for('bpadmin.manage_agents') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input name="full_name" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input name="email" type="email" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Phone</label>
+                            <input name="phone" class="form-control">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Vehicle Type</label>
+                            <select name="vehicle_type" class="form-select form-select-lg w-100" required>
+                                <option value="">Select vehicle</option>
+                                <option value="bike">Bike</option>
+                                <option value="car">Car</option>
+                                <option value="van">Van</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">State</label>
+                            <select name="state" id="state" class="form-select form-select-lg w-100" required>
+                                <option value="">Select state</option>
+                                {% for state in locations %}
+                                    <option value="{{ state }}">{{ state }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">City</label>
+                            <select name="city" id="city" class="form-select form-select-lg w-100" required>
+                                <option value="">Select city</option>
+                            </select>
+                        </div>
+                        
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Password <small class="text-muted">(leave blank to auto-generate)</small>
+                            </label>
+                            <input name="password" class="form-control">
+                        </div>
+
+                        <button class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus me-2"></i>Create Agent
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agent List -->
+        <div class="col-lg-7 mb-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">All Agents</h5>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark text-center">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Vehicle</th>
+                                    <th>Location</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for agent in agents %}
+                                <tr class="text-center">
+                                    <td>{{ loop.index }}</td>
+                                    <td class="fw-bold">{{ agent.full_name }}</td>
+                                    <td>{{ agent.email }}</td>
+                                    <td>{{ agent.vehicle_type|capitalize }}</td>
+                                    <td>{{ agent.city }}, {{ agent.state }}</td>
+                                    <td>
+                                        <a href="{{ url_for('bpadmin.edit_agent', agent_id=agent.id) }}"
+                                           class="btn btn-sm btn-outline-warning">Edit</a>
+                                        <a href="{{ url_for('bpadmin.delete_agent', agent_id=agent.id) }}"
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Delete this agent?');">Delete</a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        No agents found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+    const locations = {{ locations | tojson | safe }};
+    const stateSelect = document.getElementById('state');
+    const citySelect = document.getElementById('city');
+
+    if (stateSelect) {
+        stateSelect.addEventListener('change', function () {
+            const cities = locations[this.value] || [];
+            citySelect.innerHTML = '<option value="">Select city</option>';
+            cities.forEach(city => {
+                const opt = document.createElement('option');
+                opt.value = city;
+                opt.textContent = city;
+                citySelect.appendChild(opt);
+            });
+        });
+    }
+</script>
+{% endblock %}

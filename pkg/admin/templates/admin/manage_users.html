@@ -1,0 +1,78 @@
+{% extends "admin/dashboard.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('bpadmin.dashboard') }}" class="btn btn-light me-3">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <h3 class="mb-0">User Control</h3>
+    </div>
+
+    <!-- Flash messages -->
+    <div class="row justify-content-center mb-3">
+        <div class="col-lg-6">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, msg in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show text-center">
+                            {{ msg }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert">x</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h5 class="mb-3">All Users</h5>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark text-center">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr class="text-center">
+                                    <td>{{ loop.index }}</td>
+                                    <td class="fw-bold">{{ user.full_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or '-' }}</td>
+                                    <td>
+                                        <a href="{{ url_for('bpadmin.delete_user', user_id=user.id) }}"
+                                           class="btn btn-sm btn-outline-danger"
+                                           onclick="return confirm('Are you sure you want to delete this user?');">
+                                           Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No users found.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

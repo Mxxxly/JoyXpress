@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
+from werkzeug.security import generate_password_hash, check_password_hash
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -38,7 +39,14 @@ class Agent(db.Model):
     is_available = db.Column(db.Boolean, default=True)
     is_active = db.Column(db.Boolean, default=True)
 
+
     created_at = db.Column(db.DateTime, default=db.func.now())
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     shipments = db.relationship('Shipment', backref='agent', lazy=True)
 
@@ -129,8 +137,6 @@ class ShipmentStatusHistory(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.now())
 
     shipment = db.relationship('Shipment', backref='status_history')
-
-
 
 
 
