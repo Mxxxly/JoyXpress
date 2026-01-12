@@ -10,7 +10,11 @@
 
 
 <!-- Favicon -->
+
 <link href="{{ url_for('static', filename='img/favicon.ico') }}" rel="icon">
+<link href="{{url_for('static', filename='/img/favicon.ico')}}" rel="icon">
+<link href="{{url_for('static', filename='/img/favicon.ico')}}" rel="apple-touch-icon">
+<link rel="manifest" href="/site.webmanifest">
 
 <!-- Google Web Fonts (external stays the same) -->
 <link rel="preconnect" href="https://fonts.gstatic.com">
