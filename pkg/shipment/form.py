@@ -44,7 +44,7 @@ class NewShipmentForm(FlaskForm):
     distance_km = FloatField("Distance (km)", validators=[Optional()])
     calculated_amount = FloatField("Calculated Amount", validators=[Optional()])
 
-    submit = SubmitField("Confirm Shipment & Proceed to Payment")
+    submit = SubmitField("Confirm & Proceed to Payment")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

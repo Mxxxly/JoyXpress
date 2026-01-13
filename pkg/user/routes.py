@@ -123,20 +123,12 @@ def dashboard():
 @userobj.route('/logout/')
 def logout():
     """Logs the user out by clearing the session."""
-    
-    # 1. Clear the relevant session data
-    # Check if the keys exist before trying to pop them
+
     if 'useronline' in session:
         session.pop('useronline')
 
-    # Optional: Clear the entire session if you have no other data you need to preserve
-    # session.clear() 
-
     # 2. Flash a success message
     flash("You have been successfully logged out.", "info")
-
-    # 3. Redirect to the login page (or homepage)
-    # Using 'bpuser.login' ensures the link works correctly across blueprints
     return redirect(url_for('bpuser.login'))
 
 

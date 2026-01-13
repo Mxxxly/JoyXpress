@@ -195,6 +195,24 @@
         color: #6c757d;
         font-weight: 500;
     }
+    #wrapper.toggled #sidebar-wrapper {
+    margin-left: 0;
+}
+
+#wrapper.toggled #page-content-wrapper {
+    margin-left: 0;
+}
+@media (max-width: 767px) {
+    #sidebar-wrapper {
+        top: 0;
+        height: 100vh;
+    }
+}
+@media (min-width: 768px) {
+    .top-admin-nav {
+        display: flex;
+    }
+}
     </style>
 </head>
 
